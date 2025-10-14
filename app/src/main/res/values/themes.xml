@@ -1,0 +1,23 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme -->
+    <style name="Base.Theme.MateraCityPass" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Font per tutti i TextView -->
+        <item name="android:fontFamily">@font/plusjakartasans</item>
+
+        <!-- Font per i pulsanti -->
+        <item name="android:buttonStyle">@style/Widget.App.Button</item>
+
+        <!-- Colori primari -->
+        <item name="colorPrimary">#3949AB</item>
+        <item name="colorPrimaryVariant">#303F9F</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+    </style>
+
+    <style name="Theme.MateraCityPass" parent="Base.Theme.MateraCityPass" />
+
+    <!-- Stile personalizzato per i pulsanti -->
+    <style name="Widget.App.Button" parent="Widget.Material3.Button">
+        <item name="android:fontFamily">@font/plusjakartasans</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+</resources>

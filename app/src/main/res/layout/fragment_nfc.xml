@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        >
+
+        <!-- BANNER IMAGE -->
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="75dp"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center"
+            android:src="@drawable/banner"
+            />
+
+        <!-- Content con padding -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🖥️ Console NFC"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Status Text -->
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pronto"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Main Card with NFC Icon -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="32dp"
+                    android:gravity="center">
+
+                    <!-- NFC Icon Area with dashed border -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="24dp"
+                        android:background="#fefefe">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <!-- NFC Icon -->
+                            <ImageView
+                                android:layout_width="80dp"
+                                android:layout_height="80dp"
+                                android:src="@drawable/ic_nfc_big"
+                                android:layout_marginBottom="16dp"/>
+
+                            <!-- Instruction Text -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Avvicina un tag NFC al tuo\ndispositivo per iniziare."
+                                android:textSize="16sp"
+                                android:textColor="#1A1A1A"
+                                android:gravity="center"
+                                android:lineSpacingExtra="4dp"/>
+
+                        </LinearLayout>
+
+                    </FrameLayout>
+
+                    <!-- Large Code Display -->
+                    <TextView
+                        android:id="@+id/tvCodeLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="33sp"
+                        android:textStyle="bold"
+                        android:textColor="#3F51B5"
+                        android:gravity="center"
+
+                        android:visibility="gone"
+                        android:letterSpacing="0.1"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Initialize Tag Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnWriteFlow"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Inizializza Tag"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_nfc_wave"
+                app:iconSize="20dp"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconTint="@android:color/white"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#3949AB"
+                android:layout_marginBottom="12dp"
+                app:elevation="0dp"/>
+
+            <!-- Test Tag Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTest"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Testa Tag"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_edit"
+                app:iconSize="20dp"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconTint="@android:color/white"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#daae8b"
+                app:elevation="0dp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
