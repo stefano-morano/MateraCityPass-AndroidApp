@@ -30,6 +30,6 @@
 - **iOS (pianificata)** con funzioni analoghe (limiti USB possibili).
 
 ## Crediti
-@Matera City Pass 2025
+@MateraCityPass 2025
 
 > Per dettagli tecnici completi, vedi la **documentazione** del progetto.
