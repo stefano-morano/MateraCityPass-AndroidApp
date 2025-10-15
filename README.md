@@ -2,6 +2,10 @@
 
 > App Android per la gestione del Sistema NFC per il Matera City Pass
 
+<p align="center">
+  <img src="app/src/main/res/drawable/banner.png" alt="Schermata" width="500">
+</p>
+
 ## Caratteristiche
 - **USB**: discovery + permessi, apertura seriale **115200 8N1**, I/O asincrono, monitor, riconnessione.
 - **NFC**: lettura payload, **inizializzazione codice 6 caratteri**, reset, conferma via rilettura.
