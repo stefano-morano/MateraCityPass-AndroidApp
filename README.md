@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/src/main/res/drawable/banner.png" alt="Schermata" width="500">
+  <img src="app/src/main/res/drawable/banner.png" alt="Schermata" width="300">
 </p>
 
 # Matera City Pass – Android App
