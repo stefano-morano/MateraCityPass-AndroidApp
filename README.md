@@ -22,14 +22,6 @@
 - **Tab USB**: premi **Connetti**, accetta permesso, usa **Test** e comandi per salvare parametri.
 - **Tab NFC**: avvicina il tag per leggere; inserisci **codice 6** → **Inizializza**; **Reset** se previsto.
 
-## Protocollo (sintesi)
-- USB: `GET_PARAMETERS`, `SAVE_WIFI: <SSID> <PASSWORD>`, `SAVE_ACTIVITY: <NOME> <ID> <MUSEO>`, `TEST`.
-- NFC: `READ_TAG`, `INIT_TAG: <CODICE6>`, `RESET_TAG`, `TEST`.
-
-## Problemi comuni
-- **USB non visto**: verifica OTG/cavo, permessi, filtro CH340.
-- **NFC fallisce**: abilita NFC, usa tag NDEF scrivibile, tieni fermo il tag.
-
 ## Roadmap
 - **iOS (pianificata)** con funzioni analoghe (limiti USB possibili).
 
