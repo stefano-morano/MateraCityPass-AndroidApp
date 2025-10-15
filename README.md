@@ -26,9 +26,6 @@
 - **Tab USB**: premi **Connetti**, accetta permesso, usa **Test** e comandi per salvare parametri.
 - **Tab NFC**: avvicina il tag per leggere; inserisci **codice 6** → **Inizializza**; **Reset** se previsto.
 
-## Roadmap
-- **iOS (pianificata)** con funzioni analoghe (limiti USB possibili).
-
 ## Crediti
 @MateraCityPass 2025
 
