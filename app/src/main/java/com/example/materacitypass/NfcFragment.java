@@ -291,27 +291,43 @@ public class NfcFragment extends Fragment {
     }
 
     private NdefRecord createTextRecord(String text) {
-        byte[] langBytes = "en".getBytes(Charset.forName("US-ASCII"));
+        // URI Record con prefisso 0x00 (no protocol) - universalmente leggibile
         byte[] textBytes = text.getBytes(Charset.forName("UTF-8"));
-        byte[] payload = new byte[1 + langBytes.length + textBytes.length];
-        payload[0] = (byte) langBytes.length;
-        System.arraycopy(langBytes, 0, payload, 1, langBytes.length);
-        System.arraycopy(textBytes, 0, payload, 1 + langBytes.length, textBytes.length);
-        return new NdefRecord(NdefRecord.TNF_WELL_KNOWN, NdefRecord.RTD_TEXT, new byte[0], payload);
+        byte[] payload = new byte[1 + textBytes.length];
+        payload[0] = 0x00; // No URI prefix
+        System.arraycopy(textBytes, 0, payload, 1, textBytes.length);
+
+        return new NdefRecord(
+                NdefRecord.TNF_WELL_KNOWN,
+                NdefRecord.RTD_URI,
+                new byte[0],
+                payload
+        );
     }
 
     private String parseFirstTextRecord(NdefMessage message) {
         for (NdefRecord r : message.getRecords()) {
-            if (r.getTnf() == NdefRecord.TNF_WELL_KNOWN &&
-                    Arrays.equals(r.getType(), NdefRecord.RTD_TEXT)) {
-                byte[] payload = r.getPayload();
-                int langLen = payload[0] & 0x3F;
-                return new String(payload, 1 + langLen, payload.length - 1 - langLen, Charset.forName("UTF-8"));
+            if (r.getTnf() == NdefRecord.TNF_WELL_KNOWN) {
+
+                // Supporta URI Record (nuovo formato)
+                if (Arrays.equals(r.getType(), NdefRecord.RTD_URI)) {
+                    byte[] payload = r.getPayload();
+                    if (payload.length > 1) {
+                        // Salta il primo byte (URI prefix, nel nostro caso 0x00)
+                        return new String(payload, 1, payload.length - 1, Charset.forName("UTF-8"));
+                    }
+                }
+
+                // Supporta anche Text Record (vecchio formato, per retrocompatibilità)
+                if (Arrays.equals(r.getType(), NdefRecord.RTD_TEXT)) {
+                    byte[] payload = r.getPayload();
+                    int langLen = payload[0] & 0x3F;
+                    return new String(payload, 1 + langLen, payload.length - 1 - langLen, Charset.forName("UTF-8"));
+                }
             }
         }
         return null;
     }
-
     private String generateUniqueCode(int maxTries) {
         for (int i = 0; i < maxTries; i++) {
             String code = randomCode6();
