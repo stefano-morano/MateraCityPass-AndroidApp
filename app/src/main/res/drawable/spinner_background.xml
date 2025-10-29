@@ -1,0 +1,19 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- SFONDO + BORDO -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <stroke android:width="2dp" android:color="#3949AB" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+
+    <!-- ICONA FRECCIA -->
+    <item
+        android:right="12dp"
+        android:top="0dp"
+        android:bottom="0dp"
+        android:gravity="center_vertical|right"
+        android:drawable="@drawable/ic_arrow" />
+</layer-list>

@@ -256,15 +256,16 @@
                         android:textSize="14sp"
                         android:layout_marginBottom="12dp"/>
 
-                    <!-- NUOVA CHECKBOX MUSEO -->
-                    <CheckBox
-                        android:id="@+id/cb_museo"
+                    <!-- Merchant Type Spinner -->
+                    <Spinner
+                        android:id="@+id/spinnerActivityType"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="🏛️ Museo"
-                        android:textSize="14sp"
-                        android:textColor="#333333"
-                        android:layout_marginBottom="12dp"/>
+                        android:minHeight="48dp"
+                        android:padding="12dp"
+                        android:background="@drawable/spinner_background"
+                        android:layout_marginBottom="24dp"
+                        android:spinnerMode="dropdown" />
 
                     <Button
                         android:id="@+id/btn_save_activity"

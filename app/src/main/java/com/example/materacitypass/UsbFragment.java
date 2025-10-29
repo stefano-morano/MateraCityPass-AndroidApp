@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UsbFragment extends Fragment {
 
@@ -63,17 +64,58 @@ public class UsbFragment extends Fragment {
     private EditText etActivityName, etActivityId;
     private Button btnSaveActivity;
     private View layoutConnected;
-    private CheckBox cbMuseo;
     private NestedScrollView scrollViewSerial;
+    private Spinner spinner;
+
+    // Enum per i tipi di merchant
+    private enum MerchantType {
+        ACTIVITY("Attività", 1),
+        MUSEUM("Museo", 2),
+        HOTEL("Albergo", 3);
+
+        private final String displayName;
+        private final int code;
+
+        MerchantType(String displayName, int code) {
+            this.displayName = displayName;
+            this.code = code;
+        }
+
+        public String getDisplayName() { return displayName; }
+        public int getCode() { return code; }
+
+        public static MerchantType fromDisplayName(String name) {
+            for (MerchantType type : values()) {
+                if (type.displayName.equals(name)) {
+                    return type;
+                }
+            }
+            return ACTIVITY; // default
+        }
+
+        public static MerchantType fromCode(int code) {
+            for (MerchantType type : values()) {
+                if (type.code == code) {
+                    return type;
+                }
+            }
+            return ACTIVITY; // default
+        }
+    }
+
+    private static String[] getMerchantDisplayNames() {
+        MerchantType[] types = MerchantType.values();
+        String[] names = new String[types.length];
+        for (int i = 0; i < types.length; i++) {
+            names[i] = types[i].getDisplayName();
+        }
+        return names;
+    }
 
     private StringBuilder serialBuffer = new StringBuilder();
     private static final int MAX_SERIAL_BUFFER = 5000;
-    private boolean waitingForWifiResponse = false;
+    private final AtomicBoolean waitingForWifiResponse = new AtomicBoolean(false);
     private long lastDataReceivedTime = 0;
-
-
-
-
 
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         @Override
@@ -107,6 +149,15 @@ public class UsbFragment extends Fragment {
         initializeUsb();
         setupListeners();
 
+        // Configura lo Spinner con le opzioni
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                getMerchantDisplayNames()
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
         layoutConnected.setVisibility(View.GONE);
         tvStatus.setText("🔌 Pronto per connettersi");
 
@@ -120,7 +171,7 @@ public class UsbFragment extends Fragment {
         btnConnect = view.findViewById(R.id.btn_connect);
         btnDisconnect = view.findViewById(R.id.btn_disconnect);
         btnTest = view.findViewById(R.id.btn_test);
-        cbMuseo = view.findViewById(R.id.cb_museo);
+        spinner = view.findViewById(R.id.spinnerActivityType);
         btnSaveWifi = view.findViewById(R.id.btn_save_wifi);
         etWifiSsid = view.findViewById(R.id.et_wifi_ssid);
         etWifiPassword = view.findViewById(R.id.et_wifi_password);
@@ -129,7 +180,6 @@ public class UsbFragment extends Fragment {
         etActivityName = view.findViewById(R.id.et_activity_name);
         etActivityId = view.findViewById(R.id.et_activity_id);
         btnSaveActivity = view.findViewById(R.id.btn_save_activity);
-
     }
 
     private void initializeUsb() {
@@ -427,7 +477,7 @@ public class UsbFragment extends Fragment {
                     if (isConnected && serialPort != null) {
                         sendData("GET_PARAMETERS");
                         updateSerialMonitor(">> GET_PARAMETERS");
-                        waitingForWifiResponse = true;
+                        waitingForWifiResponse.set(true);
                     }
                 }, 250);
             });
@@ -457,36 +507,47 @@ public class UsbFragment extends Fragment {
 
             requireActivity().runOnUiThread(() -> {
                 try {
-                    if (waitingForWifiResponse && receivedText.startsWith("DEVICE_PARAMETERS:")) {
+                    if (waitingForWifiResponse.get() && receivedText.startsWith("DEVICE_PARAMETERS:")) {
                         String credentials = receivedText.substring("DEVICE_PARAMETERS:".length()).trim();
                         String[] parts = credentials.split(" ");
 
                         if (parts.length >= 5) {
-                            // Nuovo formato: WIFI_PARAMETERS: ssid password nomeattività idattività museo
+                            // Formato completo: DEVICE_PARAMETERS: ssid password nomeattività idattività merchantType
                             etWifiSsid.setText(parts[0]);
                             etWifiPassword.setText(parts[1]);
                             etActivityName.setText(parts[2]);
                             etActivityId.setText(parts[3]);
 
-                            // Imposta checkbox museo
-                            cbMuseo.setChecked(parts[4].equals("1"));
+                            // Imposta spinner tipo attività
+                            try {
+                                int merchantCode = Integer.parseInt(parts[4]);
+                                MerchantType merchantType = MerchantType.fromCode(merchantCode);
+                                // Trova l'indice corretto nello spinner
+                                for (int i = 0; i < MerchantType.values().length; i++) {
+                                    if (MerchantType.values()[i] == merchantType) {
+                                        spinner.setSelection(i);
+                                        break;
+                                    }
+                                }
+                            } catch (NumberFormatException e) {
+                                android.util.Log.e("USB_SERIAL", "Errore parsing merchant type", e);
+                            }
 
-                            waitingForWifiResponse = false;
+                            waitingForWifiResponse.set(false);
                             updateSerialMonitor("✓ WiFi e Attività ottenuti");
                         } else if (parts.length >= 4) {
-                            // Formato senza museo (retrocompatibilità)
+                            // Formato senza merchantType (retrocompatibilità)
                             etWifiSsid.setText(parts[0]);
                             etWifiPassword.setText(parts[1]);
                             etActivityName.setText(parts[2]);
                             etActivityId.setText(parts[3]);
-                            cbMuseo.setChecked(false);
-                            waitingForWifiResponse = false;
+                            waitingForWifiResponse.set(false);
                             updateSerialMonitor("✓ WiFi e Attività ottenuti");
                         } else if (parts.length >= 2) {
                             // Vecchio formato: solo SSID e password
                             etWifiSsid.setText(parts[0]);
                             etWifiPassword.setText(parts[1]);
-                            waitingForWifiResponse = false;
+                            waitingForWifiResponse.set(false);
                             updateSerialMonitor("✓ Credenziali WiFi ottenute");
                         } else {
                             updateSerialMonitor(receivedText);
@@ -495,7 +556,7 @@ public class UsbFragment extends Fragment {
                         updateSerialMonitor(receivedText);
                     }
                 } catch (Exception e) {
-                    logError("Errore processing  " + e.getMessage());
+                    logError("Errore processing: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
@@ -600,17 +661,46 @@ public class UsbFragment extends Fragment {
         String activityName = etActivityName.getText().toString().trim();
         String activityId = etActivityId.getText().toString().trim();
 
-        int museo = cbMuseo.isChecked() ? 1 : 0;
+        MerchantType merchantType = getSelectedMerchantTypeSync();
 
         if (activityName.isEmpty() || activityId.isEmpty()) {
             showToast("❌ Inserisci nome e ID attività");
             return;
         }
 
-        String command = "SAVE_ACTIVITY: " + activityName + " " + activityId + " " + museo;
+        String command = "SAVE_ACTIVITY: " + activityName + " " + activityId + " " + merchantType.getCode();
         sendData(command);
         updateSerialMonitor(">> " + command);
         showToast("✅ Configurazione Attività inviata");
+    }
+
+    private MerchantType getSelectedMerchantTypeSync() {
+        if (getActivity() == null) {
+            return MerchantType.ACTIVITY;
+        }
+        // Se siamo già sul thread UI, ottieni direttamente
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            String selected = (String) spinner.getSelectedItem();
+            return MerchantType.fromDisplayName(selected);
+        }
+        // Altrimenti usa sincronizzazione
+        final MerchantType[] result = new MerchantType[1];
+        final Object lock = new Object();
+        synchronized (lock) {
+            requireActivity().runOnUiThread(() -> {
+                synchronized (lock) {
+                    String selected = (String) spinner.getSelectedItem();
+                    result[0] = MerchantType.fromDisplayName(selected);
+                    lock.notify();
+                }
+            });
+            try {
+                lock.wait(1000); // timeout di 1 secondo
+            } catch (InterruptedException e) {
+                android.util.Log.e("USB_SERIAL", "Interrupted while waiting for UI thread", e);
+            }
+        }
+        return result[0] != null ? result[0] : MerchantType.ACTIVITY;
     }
 
     private void stopReconnectionAttempts() {
@@ -804,6 +894,11 @@ public class UsbFragment extends Fragment {
         stopHealthCheck();
         stopReconnectionAttempts();
         disconnect();
+
+        // Rimuovi tutti i callbacks dal handler per prevenire memory leak
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
 
         try {
             if (getContext() != null) {
