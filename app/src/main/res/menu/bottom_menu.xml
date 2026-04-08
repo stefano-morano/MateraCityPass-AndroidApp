@@ -6,7 +6,12 @@
         android:title="NFC" />
 
     <item
-        android:id="@+id/nav_usb"
-        android:icon="@drawable/ic_usb"
-        android:title="USB" />
+        android:id="@+id/nav_bluetooth"
+        android:icon="@drawable/ic_bluetooth"
+        android:title="Bluetooth" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_profile"
+        android:title="Profilo" />
 </menu>

@@ -15,7 +15,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity {
 
     private NfcFragment nfcFragment;
-    private UsbFragment usbFragment;
+    private BluetoothFragment bluetoothFragment;
+    private ProfileFragment profileFragment;
     private NfcAdapter nfcAdapter;
 
     @Override
@@ -31,19 +32,22 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         nfcFragment = new NfcFragment();
-        usbFragment = new UsbFragment();
+        bluetoothFragment = new BluetoothFragment();
+        profileFragment = new ProfileFragment();
 
         // Carica il fragment NFC di default
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, nfcFragment)
-                .commitNow();  // ← CAMBIA DA .commit() a .commitNow()
+                .commitNow();
 
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             if (item.getItemId() == R.id.nav_nfc) {
                 selectedFragment = nfcFragment;
-            } else if (item.getItemId() == R.id.nav_usb) {
-                selectedFragment = usbFragment;
+            } else if (item.getItemId() == R.id.nav_bluetooth) {
+                selectedFragment = bluetoothFragment;
+            } else if (item.getItemId() == R.id.nav_profile) {
+                selectedFragment = profileFragment;
             }
 
             if (selectedFragment != null) {
@@ -55,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // ← SPOSTATO DOPO commitNow(), ora il fragment è pronto
         handleIntent(getIntent());
     }
 
@@ -102,3 +105,4 @@ public class MainActivity extends AppCompatActivity {
         // Il foreground dispatch viene gestito dal fragment
     }
 }
+
