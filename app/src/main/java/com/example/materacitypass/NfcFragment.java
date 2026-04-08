@@ -20,10 +20,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.auth.FirebaseAuth;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import okhttp3.*;
@@ -31,12 +37,15 @@ import okhttp3.*;
 public class NfcFragment extends Fragment {
 
     private NfcAdapter nfcAdapter;
-    private TextView statusTv, tvCodeLarge;
-    private Button btnWriteFlow, btnTest;
+    private TextView statusTv, tvCodeLarge, tvCustomIdError;
+    private Button btnWriteFlow, btnTest, btnLogout;
     private Spinner spinnerPassType;
+    private TextInputEditText etNumber, etCustomId;
     private final ExecutorService ioPool = Executors.newSingleThreadExecutor();
     private final OkHttpClient http = new OkHttpClient();
     private static final MediaType JSON = MediaType.get("application/json");
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
     private enum Mode { IDLE, WRITE_FLOW, TEST_ONLY }
     private Mode mode = Mode.IDLE;
@@ -44,10 +53,9 @@ public class NfcFragment extends Fragment {
 
     // Enum per i tipi di pass
     private enum PassType {
-        RECHARGEABLE("🔃 Ricaricabile", "Pending", true),
-        ONE_DAY("➡️ 1 Giorno", "1Day", false),
-        TWO_DAYS("➡️ 2 Giorni", "2Day", false),
-        THREE_DAYS("➡️ 3 Giorni", "3Day", false);
+        ONE_DAY("1 Giorno", "1Day", false),
+        TWO_DAYS("2 Giorni", "2Day", false),
+        THREE_DAYS("3 Giorni", "3Day", false);
 
         private final String displayName;
         private final String userId;
@@ -69,7 +77,7 @@ public class NfcFragment extends Fragment {
                     return type;
                 }
             }
-            return RECHARGEABLE; // default
+            return ONE_DAY; // default (cambiato da RECHARGEABLE)
         }
     }
 
@@ -91,7 +99,18 @@ public class NfcFragment extends Fragment {
         tvCodeLarge = view.findViewById(R.id.tvCodeLarge);
         btnWriteFlow = view.findViewById(R.id.btnWriteFlow);
         btnTest = view.findViewById(R.id.btnTest);
+        btnLogout = view.findViewById(R.id.btnLogout);
         spinnerPassType = view.findViewById(R.id.spinnerPassType);
+        etNumber = view.findViewById(R.id.etNumber);
+        etCustomId = view.findViewById(R.id.etCustomId);
+        tvCustomIdError = view.findViewById(R.id.tvCustomIdError);
+
+        // Verifica se l'utente è già autenticato, altrimenti mostra il dialog di login
+        if (auth.getCurrentUser() == null) {
+            showLoginDialog();
+        } else {
+            android.util.Log.d("FIREBASE_AUTH", "Utente già autenticato: " + auth.getCurrentUser().getEmail());
+        }
 
         // Configura lo Spinner con le opzioni
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -101,6 +120,51 @@ public class NfcFragment extends Fragment {
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerPassType.setAdapter(adapter);
+
+        // Setup Custom ID validation con verifica real-time
+        etCustomId.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String customId = s.toString().trim().toUpperCase();
+
+                // Se il campo è vuoto, abilita il pulsante
+                if (customId.isEmpty()) {
+                    tvCustomIdError.setVisibility(View.GONE);
+                    btnWriteFlow.setEnabled(true);
+                    return;
+                }
+
+                // Valida il formato dell'ID (6 caratteri alfanumerici)
+                String error = validateCustomId(customId);
+                if (error != null) {
+                    tvCustomIdError.setText(error);
+                    tvCustomIdError.setVisibility(View.VISIBLE);
+                    btnWriteFlow.setEnabled(false);  // Disabilita il pulsante
+                    return;
+                }
+
+                // ID valido - controlla se esiste nei database (ASINCRONO)
+                tvCustomIdError.setVisibility(View.GONE);
+                btnWriteFlow.setEnabled(false);  // Disabilita mentre controlla
+
+                checkIfIdExistsAsync(customId, exists -> {
+                    if (exists) {
+                        tvCustomIdError.setText("ID già presente nei database");
+                        tvCustomIdError.setVisibility(View.VISIBLE);
+                        btnWriteFlow.setEnabled(false);
+                    } else {
+                        tvCustomIdError.setVisibility(View.GONE);
+                        btnWriteFlow.setEnabled(true);  // Abilita il pulsante
+                    }
+                });
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(requireContext());
         if (nfcAdapter == null) {
@@ -124,6 +188,13 @@ public class NfcFragment extends Fragment {
             mode = Mode.TEST_ONLY;
             setBigCode(null);
             setStatus("📖 Avvicina un tag da leggere");
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            auth.signOut();
+            android.util.Log.d("FIREBASE_AUTH", "Logout completato");
+            android.widget.Toast.makeText(requireContext(), "Logout completato", android.widget.Toast.LENGTH_SHORT).show();
+            showLoginDialog();
         });
 
         return view;
@@ -199,7 +270,7 @@ public class NfcFragment extends Fragment {
 
     private PassType getSelectedPassTypeSync() {
         if (getActivity() == null) {
-            return PassType.RECHARGEABLE;
+            return PassType.ONE_DAY;
         }
         // Ottieni il valore direttamente se siamo già sul thread UI
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
@@ -223,18 +294,46 @@ public class NfcFragment extends Fragment {
                 android.util.Log.e("NFC", "Interrupted while waiting for UI thread", e);
             }
         }
-        return result[0] != null ? result[0] : PassType.RECHARGEABLE;
+        return result[0] != null ? result[0] : PassType.ONE_DAY;
     }
 
     private void handleWriteFlow(Tag tag, PassType passType) {
         setStatus("🎲 Generazione codice...");
 
-        String code = generateUniqueCode(15);
-        if (code == null) {
-            setStatus("❌ Impossibile generare codice univoco");
-            setBigCode(null);
-            mode = Mode.IDLE;
-            return;
+        // Controlla se l'utente ha specificato un ID personalizzato
+        String customId = etCustomId.getText().toString().trim().toUpperCase();
+        String code;
+
+        if (!customId.isEmpty()) {
+            // Valida l'ID personalizzato
+            String error = validateCustomId(customId);
+            if (error != null) {
+                setStatus("❌ " + error);
+                setBigCode(null);
+                mode = Mode.IDLE;
+                return;
+            }
+
+            // Controlla se l'ID esiste già nei database
+            if (checkIfIdExists(customId)) {
+                setStatus("❌ ID già presente in database");
+                setBigCode(null);
+                mode = Mode.IDLE;
+                tvCustomIdError.setText("ID già presente");
+                tvCustomIdError.setVisibility(View.VISIBLE);
+                return;
+            }
+
+            code = customId;
+        } else {
+            // Genera un codice casuale
+            code = generateUniqueCode(15);
+            if (code == null) {
+                setStatus("❌ Impossibile generare codice univoco");
+                setBigCode(null);
+                mode = Mode.IDLE;
+                return;
+            }
         }
 
         setStatus("📝 Scrittura: " + code);
@@ -250,12 +349,22 @@ public class NfcFragment extends Fragment {
         String readBack = readTextFromTag(tag);
         if (code.equals(readBack)) {
             setBigCode(code);
-            setStatus("💾 Salvataggio su Airtable...");
-            if (createAirtableRecord(code, passType)) {
+            setStatus("💾 Salvataggio nei database...");
+
+            // Salva su Airtable
+            boolean airtableSuccess = createAirtableRecord(code, passType);
+
+            // Salva su Firestore
+            boolean firestoreSuccess = createFirestoreRecord(code, passType);
+
+            if (airtableSuccess && firestoreSuccess) {
                 lastCode = code;
                 setStatus("✅ Completato!");
+            } else if (airtableSuccess || firestoreSuccess) {
+                lastCode = code;
+                setStatus("⚠️ Salvataggio parziale");
             } else {
-                setStatus("⚠️ Scritto ma errore Airtable");
+                setStatus("⚠️ Scritto ma errore nel salvataggio");
             }
 
         } else {
@@ -437,12 +546,16 @@ public class NfcFragment extends Fragment {
             String url = "https://api.airtable.com/v0/" + BuildConfig.AIRTABLE_BASE_ID +
                     "/" + BuildConfig.AIRTABLE_TABLE_NAME;
 
+            // Ottieni il numero dalla textbox, oppure 0 se vuota
+            int lottoNumber = getNumberAsInt();
+
             // Costruisci il JSON usando l'enum
             String json = String.format(
-                    "{\"fields\":{\"NFCID\":\"%s\",\"UserId\":\"%s\",\"Validate\":%b}}",
+                    "{\"fields\":{\"NFCID\":\"%s\",\"UserId\":\"%s\",\"Validate\":%b,\"Lotto\":%d}}",
                     code,
                     passType.getUserId(),
-                    passType.isValidate()
+                    passType.isValidate(),
+                    lottoNumber
             );
 
             android.util.Log.d("AIRTABLE", "JSON: " + json);
@@ -461,6 +574,36 @@ public class NfcFragment extends Fragment {
             return success;
         } catch (Exception e) {
             android.util.Log.e("AIRTABLE", "Create error", e);
+            return false;
+        }
+    }
+
+    private boolean createFirestoreRecord(String code, PassType passType) {
+        try {
+            // Ottieni il numero dalla textbox, oppure 0 se vuota
+            int lottoNumber = getNumberAsInt();
+
+            // Crea una mappa con i dati
+            Map<String, Object> record = new HashMap<>();
+            record.put("nfcid", code);
+            record.put("userId", passType.getUserId());
+            record.put("validate", passType.isValidate());
+            record.put("lotto", lottoNumber);
+            record.put("timestamp", System.currentTimeMillis());
+
+            // Salva su Firestore nella collection "NFC"
+            // Usa il codice come ID del documento
+            DocumentReference docRef = db.collection("NFC").document(code);
+
+            docRef.set(record).addOnSuccessListener(aVoid -> {
+                android.util.Log.d("FIRESTORE", "Record salvato con successo: " + code);
+            }).addOnFailureListener(e -> {
+                android.util.Log.e("FIRESTORE", "Errore salvataggio", e);
+            });
+
+            return true; // Ritorna true perché la richiesta è stata inviata (il risultato sarà asincrono)
+        } catch (Exception e) {
+            android.util.Log.e("FIRESTORE", "Create error", e);
             return false;
         }
     }
@@ -508,5 +651,262 @@ public class NfcFragment extends Fragment {
             sb.append(String.format("%02X", b));
         }
         return sb.toString();
+    }
+
+    /**
+     * Ottiene il numero inserito nella NumberBox
+     * @return il numero come String, o String vuota se non presente
+     */
+    public String getNumber() {
+        if (etNumber != null) {
+            return etNumber.getText().toString().trim();
+        }
+        return "";
+    }
+
+    /**
+     * Ottiene il numero inserito come integer
+     * @return il numero come int, o 0 se non valido
+     */
+    public int getNumberAsInt() {
+        String num = getNumber();
+        try {
+            return num.isEmpty() ? 0 : Integer.parseInt(num);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Imposta il numero nella NumberBox
+     * @param number il numero da inserire
+     */
+    public void setNumber(String number) {
+        if (etNumber != null) {
+            etNumber.setText(number);
+        }
+    }
+
+    /**
+     * Pulisce la NumberBox
+     */
+    public void clearNumber() {
+        if (etNumber != null) {
+            etNumber.setText("");
+        }
+    }
+
+    /**
+     * Valida l'ID personalizzato
+     * @param id l'ID da validare
+     * @return null se valido, altrimenti il messaggio di errore
+     */
+    private String validateCustomId(String id) {
+        // Controlla lunghezza
+        if (id.length() != 6) {
+            return "L'ID deve essere esattamente 6 caratteri";
+        }
+
+        // Controlla se è alfanumerico
+        if (!id.matches("^[A-Z0-9]{6}$")) {
+            return "L'ID deve contenere solo lettere (A-Z) e numeri (0-9)";
+        }
+
+        return null; // ID valido
+    }
+
+    /**
+     * Controlla se l'ID esiste già su Airtable o Firestore
+     * @param id l'ID da controllare
+     * @return true se l'ID esiste, false altrimenti
+     */
+    private boolean checkIfIdExists(String id) {
+        // Controlla su Airtable (sincronamente)
+        return airtableCodeExists(id);
+    }
+
+    /**
+     * Mostra un dialog di login email/password moderno
+     */
+    private void showLoginDialog() {
+        // Crea il dialog
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(requireContext());
+
+        // Infla il layout custom
+        android.view.View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_login, null);
+
+        // Riferimenti ai componenti del dialog
+        com.google.android.material.textfield.TextInputLayout emailLayout = dialogView.findViewById(R.id.emailLayout);
+        com.google.android.material.textfield.TextInputLayout passwordLayout = dialogView.findViewById(R.id.passwordLayout);
+        com.google.android.material.textfield.TextInputEditText emailInput = dialogView.findViewById(R.id.emailInput);
+        com.google.android.material.textfield.TextInputEditText passwordInput = dialogView.findViewById(R.id.passwordInput);
+        android.widget.TextView errorMessage = dialogView.findViewById(R.id.errorMessage);
+        android.widget.ProgressBar loadingProgress = dialogView.findViewById(R.id.loadingProgress);
+        com.google.android.material.button.MaterialButton btnLogin = dialogView.findViewById(R.id.btnLogin);
+
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+
+        android.app.AlertDialog dialog = builder.create();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
+
+        // Event listener per il pulsante Login
+        btnLogin.setOnClickListener(v -> {
+            String email = emailInput.getText().toString().trim();
+            String password = passwordInput.getText().toString().trim();
+
+            // Validazione
+            if (email.isEmpty()) {
+                emailLayout.setError("Email richiesta");
+                return;
+            }
+            if (password.isEmpty()) {
+                passwordLayout.setError("Password richiesta");
+                return;
+            }
+
+            // Reset errori
+            emailLayout.setError(null);
+            passwordLayout.setError(null);
+            errorMessage.setVisibility(View.GONE);
+
+            // Mostra loading
+            loadingProgress.setVisibility(View.VISIBLE);
+            btnLogin.setEnabled(false);
+
+            // PRIMA: Tenta il login su Firebase Auth
+            auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            // ✅ Utente autenticato! Ora possiamo leggere da Firestore
+                            android.util.Log.d("FIREBASE_AUTH", "Utente autenticato: " + auth.getCurrentUser().getEmail());
+                            
+                            // DOPO: Controlla se l'email è autorizzata (ASINCRONO)
+                            checkEmailAllowed(email, isAllowed -> {
+                                loadingProgress.setVisibility(View.GONE);
+                                
+                                if (!isAllowed) {
+                                    // Email non autorizzata - fai logout
+                                    auth.signOut();
+                                    errorMessage.setText("Email non autorizzata per l'accesso");
+                                    errorMessage.setVisibility(View.VISIBLE);
+                                    btnLogin.setEnabled(true);
+                                    return;
+                                }
+
+                                // ✅ Email autorizzata e login riuscito!
+                                android.util.Log.d("FIREBASE_AUTH", "Login completato per: " + email);
+                                dialog.dismiss();
+                                android.widget.Toast.makeText(requireContext(), "Benvenuto!", android.widget.Toast.LENGTH_SHORT).show();
+                            });
+                        } else {
+                            // ❌ Login fallito
+                            loadingProgress.setVisibility(View.GONE);
+                            errorMessage.setText("Email o password non validi");
+                            errorMessage.setVisibility(View.VISIBLE);
+                            btnLogin.setEnabled(true);
+                        }
+                    });
+        });
+
+        dialog.show();
+
+        // Personalizza il dialog per avere larghezza massima
+        android.view.WindowManager.LayoutParams layoutParams = new android.view.WindowManager.LayoutParams();
+        layoutParams.copyFrom(dialog.getWindow().getAttributes());
+        layoutParams.width = (int) (requireContext().getResources().getDisplayMetrics().widthPixels * 0.85);
+        dialog.getWindow().setAttributes(layoutParams);
+    }
+
+    /**
+     * Interfaccia per callback del controllo ID
+     */
+    private interface IdCheckCallback {
+        void onResult(boolean exists);
+    }
+
+    /**
+     * Controlla asincrono se l'ID esiste su Airtable o Firestore
+     * Non blocca il main thread
+     * Il callback è sempre eseguito sul main thread
+     */
+    private void checkIfIdExistsAsync(String id, IdCheckCallback callback) {
+        // Controlla su Airtable (sincronamente in background thread)
+        ioPool.execute(() -> {
+            try {
+                boolean existsOnAirtable = airtableCodeExists(id);
+
+                if (existsOnAirtable) {
+                    // Callback dal main thread
+                    requireActivity().runOnUiThread(() -> callback.onResult(true));
+                    return;
+                }
+
+                // Controlla su Firestore (asincrono)
+                db.collection("NFC").document(id).get()
+                        .addOnCompleteListener(task -> {
+                            try {
+                                if (task.isSuccessful()) {
+                                    com.google.firebase.firestore.DocumentSnapshot doc = task.getResult();
+                                    boolean existsOnFirestore = doc != null && doc.exists();
+                                    android.util.Log.d("ID_CHECK", "ID " + id + " esiste su Firestore: " + existsOnFirestore);
+                                    callback.onResult(existsOnFirestore);
+                                } else {
+                                    android.util.Log.w("ID_CHECK", "Errore controllo Firestore", task.getException());
+                                    callback.onResult(false);  // Se errore, consenti il caricamento
+                                }
+                            } catch (Exception e) {
+                                android.util.Log.e("ID_CHECK", "Errore nel callback Firestore", e);
+                                callback.onResult(false);
+                            }
+                        });
+            } catch (Exception e) {
+                android.util.Log.e("ID_CHECK", "Errore nel controllo ID", e);
+                requireActivity().runOnUiThread(() -> callback.onResult(false));
+            }
+        });
+    }
+
+    /**
+     * Interfaccia per callback del controllo email
+     */
+    private interface EmailCheckCallback {
+        void onResult(boolean isAllowed);
+    }
+
+    /**
+     * Controlla se l'email è autorizzata (nella whitelist admin da Firestore)
+     * Legge la lista di email admin dalla collection "config" documento "admin_emails"
+     * SICURO: Le email non sono hardcoded nel codice
+     * ASINCRONO: Usa callback, non blocca il thread principale
+     */
+    private void checkEmailAllowed(String email, EmailCheckCallback callback) {
+        db.collection("config").document("admin_emails").get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        com.google.firebase.firestore.DocumentSnapshot adminDoc = task.getResult();
+
+                        if (adminDoc != null && adminDoc.exists()) {
+                            // Ottiene l'array di email dal campo "emails"
+                            java.util.List<String> allowedEmails =
+                                    (java.util.List<String>) adminDoc.get("emails");
+
+                            if (allowedEmails != null) {
+                                android.util.Log.d("AUTH", "Email autorizzate caricate da Firestore: " + allowedEmails);
+                                callback.onResult(allowedEmails.contains(email.toLowerCase()));
+                            } else {
+                                android.util.Log.w("AUTH", "Campo 'emails' non trovato in config/admin_emails");
+                                callback.onResult(false);
+                            }
+                        } else {
+                            android.util.Log.w("AUTH", "Documento config/admin_emails non trovato");
+                            callback.onResult(false);
+                        }
+                    } else {
+                        android.util.Log.e("AUTH", "Errore nel controllo email admin", task.getException());
+                        callback.onResult(false);
+                    }
+                });
     }
 }

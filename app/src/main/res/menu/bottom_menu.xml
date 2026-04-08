@@ -4,9 +4,4 @@
         android:id="@+id/nav_nfc"
         android:icon="@drawable/ic_nfc"
         android:title="NFC" />
-
-    <item
-        android:id="@+id/nav_usb"
-        android:icon="@drawable/ic_usb"
-        android:title="USB" />
 </menu>

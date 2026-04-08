@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "566788458087",
+    "project_id": "matera-explorer-pass",
+    "storage_bucket": "matera-explorer-pass.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:566788458087:android:ca63867a097f50f965b6c2",
+        "android_client_info": {
+          "package_name": "com.example.materacitypass"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "566788458087-mnh56sed2lke9m65co6nh3qhs1qkvi6c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBYlQBhG4HQgNmA5FixQmWIEisvi9qmzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "566788458087-mnh56sed2lke9m65co6nh3qhs1qkvi6c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

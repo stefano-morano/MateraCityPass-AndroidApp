@@ -10,6 +10,7 @@ navigationFragment = "2.9.5"
 navigationUi = "2.9.5"
 foundationAndroid = "1.9.2"
 firebaseAi = "17.3.0"
+firebaseBom = "33.3.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,6 +24,9 @@ navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0" }
 foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
 firebase-ai = { group = "com.google.firebase", name = "firebase-ai", version.ref = "firebaseAi" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 usb-serial = { group = "com.github.felHR85", name="UsbSerial", version = "6.1.0" }
 
 [plugins]

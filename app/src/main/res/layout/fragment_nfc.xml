@@ -1,171 +1,309 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
-    >
+    android:background="#FAFAFA"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp">
 
-    <LinearLayout
+    <!-- Header with Logo and Status (Minimal) -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        >
+        android:layout_marginBottom="12dp">
 
-        <!-- BANNER IMAGE -->
+        <!-- Logo in top-left -->
         <ImageView
-            android:layout_width="150dp"
-            android:layout_height="75dp"
-            android:layout_marginTop="16dp"
-            android:layout_gravity="center"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:src="@drawable/banner"
-            />
+            android:contentDescription="Logo Matera City Pass"
+            android:scaleType="fitCenter"/>
 
-        <!-- Content con padding -->
+        <!-- Status inline with label -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical|end">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Stato"
+                    android:textSize="11sp"
+                    android:textColor="#999999"
+                    android:textAllCaps="true"/>
+
+                <TextView
+                    android:id="@+id/status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pronto"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"
+                    android:layout_marginTop="2dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- Main NFC Card (Compact) -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:strokeWidth="0dp">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp"
+            android:gravity="center">
 
-            <!-- Header -->
+            <!-- NFC Icon -->
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/ic_nfc_big"
+                android:layout_marginBottom="12dp"
+                android:contentDescription="NFC Icon"
+                android:scaleType="fitCenter"
+                app:tint="#3949AB"/>
+
+            <!-- Instruction Text -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🖥️ Console NFC"
-                android:textSize="28sp"
+                android:text="Avvicina un tag NFC"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#1A1A1A"
-                android:layout_marginBottom="8dp"/>
+                android:gravity="center"
+                android:layout_marginBottom="2dp"/>
 
-            <!-- Status Text -->
             <TextView
-                android:id="@+id/status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="al tuo dispositivo"
+                android:textSize="13sp"
+                android:textColor="#757575"
+                android:gravity="center"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Large Code Display -->
+            <TextView
+                android:id="@+id/tvCodeLarge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Pronto"
-                android:textSize="14sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="24dp"/>
-
-            <!-- Main Card with NFC Icon -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="32dp"
-                    android:gravity="center">
-
-                    <!-- NFC Icon Area with dashed border -->
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="24dp"
-                        android:background="#fefefe">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:gravity="center">
-
-                            <!-- NFC Icon -->
-                            <ImageView
-                                android:layout_width="80dp"
-                                android:layout_height="80dp"
-                                android:src="@drawable/ic_nfc_big"
-                                android:layout_marginBottom="16dp"/>
-
-                            <!-- Instruction Text -->
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Avvicina un tag NFC al tuo\ndispositivo per iniziare."
-                                android:textSize="16sp"
-                                android:textColor="#1A1A1A"
-                                android:gravity="center"
-                                android:lineSpacingExtra="4dp"/>
-
-                        </LinearLayout>
-
-                    </FrameLayout>
-
-                    <!-- Large Code Display -->
-                    <TextView
-                        android:id="@+id/tvCodeLarge"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="33sp"
-                        android:textStyle="bold"
-                        android:textColor="#3F51B5"
-                        android:gravity="center"
-
-                        android:visibility="gone"
-                        android:letterSpacing="0.1"/>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Pass Type Spinner -->
-            <Spinner
-                android:id="@+id/spinnerPassType"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:padding="12dp"
-                android:background="@drawable/spinner_background"
-                android:layout_marginBottom="24dp"
-                android:spinnerMode="dropdown" />
-
-            <!-- Initialize Tag Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnWriteFlow"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="Inizializza Tag"
-                android:textSize="16sp"
-                android:textColor="@android:color/white"
-                android:textAllCaps="false"
-                app:icon="@drawable/ic_nfc_wave"
-                app:iconSize="20dp"
-                app:iconGravity="textStart"
-                app:iconPadding="8dp"
-                app:iconTint="@android:color/white"
-                app:cornerRadius="12dp"
-                app:backgroundTint="#3949AB"
-                android:layout_marginBottom="12dp"
-                app:elevation="0dp"/>
-
-            <!-- Test Tag Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTest"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="Testa Tag"
-                android:textSize="16sp"
-                android:textColor="@android:color/white"
-                android:textAllCaps="false"
-                app:icon="@drawable/ic_edit"
-                app:iconSize="20dp"
-                app:iconGravity="textStart"
-                app:iconPadding="8dp"
-                app:iconTint="@android:color/white"
-                app:cornerRadius="12dp"
-                app:backgroundTint="#daae8b"
-                app:elevation="0dp"/>
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:textColor="#3949AB"
+                android:gravity="center"
+                android:visibility="gone"
+                android:letterSpacing="0.08"
+                android:layout_marginTop="12dp"/>
 
         </LinearLayout>
 
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Action Buttons (Horizontal) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="14dp"
+        android:spacing="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnWriteFlow"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Inizializza"
+            android:textSize="13sp"
+            android:textColor="@android:color/white"
+            android:textAllCaps="false"
+            app:icon="@drawable/ic_nfc_wave"
+            app:iconSize="18dp"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="@android:color/white"
+            app:cornerRadius="10dp"
+            app:backgroundTint="#3949AB"
+            app:elevation="0dp"
+            app:rippleColor="#1A237E"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTest"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Testa"
+            android:textSize="13sp"
+            android:textColor="@android:color/white"
+            android:textAllCaps="false"
+            app:icon="@drawable/ic_edit"
+            app:iconSize="18dp"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="@android:color/white"
+            app:cornerRadius="10dp"
+            app:backgroundTint="#FF9800"
+            app:elevation="0dp"
+            app:rippleColor="#E65100"/>
+
     </LinearLayout>
 
-</ScrollView>
+    <!-- Configuration Fields (Compact) -->
+    <!-- Pass Type -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tipo Pass"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        app:boxBackgroundMode="outline"
+        app:cornerRadius="10dp"
+        app:boxStrokeColor="#E8E8E8"
+        android:layout_marginBottom="12dp">
+
+        <Spinner
+            android:id="@+id/spinnerPassType"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:padding="12dp"
+            android:spinnerMode="dropdown"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Lotto Number -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lotto"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:boxBackgroundMode="outline"
+        app:cornerRadius="10dp"
+        app:boxStrokeColor="#E8E8E8"
+        android:layout_marginBottom="14dp"
+        app:counterEnabled="false"
+        app:hintTextAppearance="@style/HintTextAppearance">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etNumber"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="number"
+            android:maxLines="1"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:textSize="16sp"
+            android:textColor="#1A1A1A"
+            android:hint="Inserisci numero"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Custom ID -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ID Personalizzato (Opzionale)"
+        android:textSize="12sp"
+        android:textColor="#666666"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/customIdLayout"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:boxBackgroundMode="outline"
+        app:cornerRadius="10dp"
+        app:boxStrokeColor="#E8E8E8"
+        android:layout_marginBottom="8dp"
+        app:counterEnabled="false"
+        app:helperTextEnabled="true"
+        app:hintTextAppearance="@style/HintTextAppearance">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etCustomId"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="text"
+            android:maxLength="6"
+            android:maxLines="1"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:textSize="16sp"
+            android:textColor="#1A1A1A"
+            android:textAllCaps="true"
+            android:hint="Es: ABC123"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Custom ID Error Message -->
+    <TextView
+        android:id="@+id/tvCustomIdError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#D32F2F"
+        android:visibility="gone"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Logout Button (Below Custom ID) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Logout"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:backgroundTint="#D32F2F"
+        app:elevation="0dp"
+        android:layout_marginBottom="16dp"
+        app:rippleColor="#B71C1C"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="0dp"/>
+
+</LinearLayout>
+

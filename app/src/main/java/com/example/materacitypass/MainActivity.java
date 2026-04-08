@@ -15,7 +15,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity {
 
     private NfcFragment nfcFragment;
-    private UsbFragment usbFragment;
     private NfcAdapter nfcAdapter;
 
     @Override
@@ -28,32 +27,16 @@ public class MainActivity extends AppCompatActivity {
         window.setStatusBarColor(Color.parseColor("#F5F5F5"));
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         nfcFragment = new NfcFragment();
-        usbFragment = new UsbFragment();
 
         // Carica il fragment NFC di default
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, nfcFragment)
                 .commitNow();  // ← CAMBIA DA .commit() a .commitNow()
 
-        bottomNav.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
-            if (item.getItemId() == R.id.nav_nfc) {
-                selectedFragment = nfcFragment;
-            } else if (item.getItemId() == R.id.nav_usb) {
-                selectedFragment = usbFragment;
-            }
-
-            if (selectedFragment != null) {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, selectedFragment)
-                        .commit();
-            }
-
-            return true;
-        });
+        // ← SPOSTATO DOPO commitNow(), ora il fragment è pronto
+        handleIntent(getIntent());
 
         // ← SPOSTATO DOPO commitNow(), ora il fragment è pronto
         handleIntent(getIntent());
